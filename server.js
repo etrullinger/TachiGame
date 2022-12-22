@@ -9,6 +9,18 @@ const io = socket(server);
 // object to keep track of all players currently in game
 var players = {};
 
+// Bone variable used to store the position of the bone collectible
+var bone = {
+  x: Math.floor(Math.random() * 700) + 50,
+  y: Math.floor(Math.random() * 500) + 50
+};
+
+// Scores variable used to keep track of both team's score
+var scores = {
+  blue: 0,
+  red: 0
+}
+
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', (req, res) => {
@@ -25,10 +37,17 @@ io.on('connection', (socket) => {
     x: Math.floor(Math.random() * 700) + 50,
     y: Math.floor(Math.random() * 500) + 50,
     playerId: socket.id,
+    team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
   };
 
   // Send the players object to the new player
   socket.emit('currentPlayers', players);
+
+  // Send the bone object to the new player
+  socket.emit('boneLocation', bone);
+
+  // Send the current scores
+  socket.emit('scoreUpdate', scores);
 
   // Update all players of the new player
   socket.broadcast.emit('newPlayer', players[socket.id]);
@@ -53,6 +72,19 @@ io.on('connection', (socket) => {
     // Emit a message to all players about the player that moved
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
+
+  // When a boneCollected event is triggered, the correct team's score will be updated, a new location for the bone will be generated, and the updated scores and the stars new location will be reflected for each of the players
+  socket.on('boneCollected', () => {
+    if (players[socket.id].team === 'red') {
+      scores.red += 10;
+    } else {
+      scores.blue += 10;
+    }
+    bone.x = Math.floor(Math.random() * 700) + 50;
+    bone.y = Math.floor(Math.random() * 500) + 50;
+    io.emit('boneLocation', bone);
+    io.emit('scoreUpdate', scores);
+  })
 });
 
 server.listen(8081, () => {

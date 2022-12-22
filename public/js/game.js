@@ -36,7 +36,7 @@ function preload() {
 function create() {
   var self = this;
   this.socket = io();
-  this.add.image(400, 300, 'grass').setDisplaySize(800, 800);;
+  this.add.image(0, 0, 'grass').setOrigin(0, 0).setDisplaySize(800, 700);
 
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
   this.otherPlayers = this.physics.add.group();
@@ -77,6 +77,25 @@ function create() {
         otherPlayer.setPosition(playerInfo.x, playerInfo.y);
       }
     });
+  });
+
+  // Use of Phaser's Text Game Object in order to display the teams' scores
+  this.blueScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#0000FF' });
+  this.redScoreText = this.add.text(584, 16, '', { fontSize: '32px', fill: '#FF0000' });
+
+  // When the scoreUpdate event is received, the text of the game objects is updated by calling the setText() method with the team's score passed to each object
+  this.socket.on('scoreUpdate', (scores) => {
+    self.blueScoreText.setText('Blue: ' + scores.blue);
+    self.redScoreText.setText('Red: ' + scores.red);
+  });
+
+  // Listen for the boneLocation event. When it's received, bone object is checked to see if it exists and if it does, it is destroyed. A new bone game object is added to the player's game, and the information passed to the event to populate its location is used. If the player's game object and the bone are overlapping, the boneCollected event is emitted.By calling physics.add.overlap, Phaser will automatically check for the overlap and run the provided function when there is an overlap.
+  this.socket.on('boneLocation', (boneLocation) => {
+    if (self.bone) self.bone.destroy();
+    self.bone = self.physics.add.image(boneLocation.x, boneLocation.y, 'bone').setDisplaySize(40, 25);
+    self.physics.add.overlap(self.tachi, self.bone, () => {
+      this.socket.emit('boneCollected');
+    }, null, self);
   });
 }
 
@@ -122,7 +141,7 @@ function update() {
 
 function addPlayer(self, playerInfo) {
   // Create the player's character by using the x and y coordinates that were generated in the server code. Instead of just using self.add.image to create the character, self.physics.add.image is used in order to allow that game object to use the arcade physics. setOrigin() is used to set the origin of the game object to be in the middle of the object instead of the top left so that when a game object is rotated, it will be rotated around the origin point. setDisplaySize() is used to change the size and scale of the game object since the original size of the images can vary.
-  self.tachi = self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(50, 50);
+  self.tachi = self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
 
   // setDrag, setAngularDrag, and setMaxVelocity are used to modify how the game object reacts to the arcade physics. Both setDrag and setAngularDrag are used to control the amount of resistance the object will face when it is moving. setMaxVelocity is used to control the max speed the game object can reach.
   self.tachi.setDrag(100);
@@ -132,7 +151,7 @@ function addPlayer(self, playerInfo) {
 
 // Similar to the code added in the addPlayer() function. Main difference is that the other player's game object is added to the otherPlayers group.
 function addOtherPlayers(self, playerInfo) {
-  const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(50, 50);
+  const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
 
   otherPlayer.playerId = playerInfo.playerId;
   self.otherPlayers.add(otherPlayer);
