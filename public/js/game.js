@@ -93,6 +93,7 @@ function create() {
   this.socket.on('boneLocation', (boneLocation) => {
     if (self.bone) self.bone.destroy();
     self.bone = self.physics.add.image(boneLocation.x, boneLocation.y, 'bone').setDisplaySize(40, 25);
+    self.bone.body.setSize(250, 70);
     self.physics.add.overlap(self.tachi, self.bone, () => {
       this.socket.emit('boneCollected');
     }, null, self);
@@ -137,11 +138,40 @@ function update() {
       rotation: this.tachi.rotation
     };
   }
+
+  if (this.otherPlayers) {
+    // Set size of collision rectangle for other players' game objects
+    this.otherPlayers.getChildren().forEach((otherPlayer) => {
+      otherPlayer.body.setSize(150, 150);
+      
+      this.physics.world.wrap(otherPlayer, 5);
+
+      // var xOP = otherPlayer.x;
+      // var yOP = otherPlayer.y;
+      // var rOP = otherPlayer.rotation;
+
+      // if (otherPlayer.oldPosition && (xOP !== otherPlayer.oldPosition.x || yOP !== otherPlayer.oldPosition.y || rOP !== otherPlayer.oldPosition.rotation)) {
+      //   this.socket.emit('playerMovement', { x: otherPlayer.x, y: otherPlayer.y, rotation: otherPlayer.rotation });
+      // }
+
+      // otherPlayer.oldPosition = {
+      //   x: otherPlayer.x,
+      //   y: otherPlayer.y,
+      //   rotation: otherPlayer.rotation
+      // }
+    });
+  }
 }
 
 function addPlayer(self, playerInfo) {
   // Create the player's character by using the x and y coordinates that were generated in the server code. Instead of just using self.add.image to create the character, self.physics.add.image is used in order to allow that game object to use the arcade physics. setOrigin() is used to set the origin of the game object to be in the middle of the object instead of the top left so that when a game object is rotated, it will be rotated around the origin point. setDisplaySize() is used to change the size and scale of the game object since the original size of the images can vary.
   self.tachi = self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
+
+  // To make players collide instead of overlapping each other
+  self.physics.add.collider(self.tachi, self.otherPlayers);
+
+  // Set size of collision rectangle for player's game object
+  self.tachi.body.setSize(140, 120);
 
   // setDrag, setAngularDrag, and setMaxVelocity are used to modify how the game object reacts to the arcade physics. Both setDrag and setAngularDrag are used to control the amount of resistance the object will face when it is moving. setMaxVelocity is used to control the max speed the game object can reach.
   self.tachi.setDrag(100);
