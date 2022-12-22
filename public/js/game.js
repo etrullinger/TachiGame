@@ -36,7 +36,7 @@ function preload() {
 function create() {
   var self = this;
   this.socket = io();
-  this.add.image(0, 0, 'grass').setOrigin(0, 0).setDisplaySize(800, 700);
+  this.physics.add.image(0, 0, 'grass').setOrigin(0, 0).setDisplaySize(800, 700);
 
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
   this.otherPlayers = this.physics.add.group();
@@ -101,6 +101,7 @@ function create() {
 }
 
 function update() {
+
   if (this.tachi) {
     // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
     if (this.cursors.left.isDown) {
@@ -143,22 +144,7 @@ function update() {
     // Set size of collision rectangle for other players' game objects
     this.otherPlayers.getChildren().forEach((otherPlayer) => {
       otherPlayer.body.setSize(150, 150);
-      
       this.physics.world.wrap(otherPlayer, 5);
-
-      // var xOP = otherPlayer.x;
-      // var yOP = otherPlayer.y;
-      // var rOP = otherPlayer.rotation;
-
-      // if (otherPlayer.oldPosition && (xOP !== otherPlayer.oldPosition.x || yOP !== otherPlayer.oldPosition.y || rOP !== otherPlayer.oldPosition.rotation)) {
-      //   this.socket.emit('playerMovement', { x: otherPlayer.x, y: otherPlayer.y, rotation: otherPlayer.rotation });
-      // }
-
-      // otherPlayer.oldPosition = {
-      //   x: otherPlayer.x,
-      //   y: otherPlayer.y,
-      //   rotation: otherPlayer.rotation
-      // }
     });
   }
 }
@@ -181,7 +167,10 @@ function addPlayer(self, playerInfo) {
 
 // Similar to the code added in the addPlayer() function. Main difference is that the other player's game object is added to the otherPlayers group.
 function addOtherPlayers(self, playerInfo) {
-  const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
+  var otherPlayer = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
+
+  // To make other players in player's scene not pushable with collision
+  otherPlayer.body.pushable = false;
 
   otherPlayer.playerId = playerInfo.playerId;
   self.otherPlayers.add(otherPlayer);
