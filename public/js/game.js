@@ -11,7 +11,7 @@ var config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 300 },
+      gravity: { y: 0 },
       debug: false
     }
   },
@@ -27,12 +27,13 @@ var config = {
 var game = new Phaser.Game(config);
 
 function preload() {
-  this.load.image('tachi', 'assets/white_fluffy_dog.png');
+  this.load.image('tachi', 'assets/white_fluffy_dog_filtered.png');
   this.load.image('otherPlayer', 'assets/black_shiba_inu_filtered.png');
 }
 
 function create() {
   var self = this;
+  this.socket = io();
 
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
   this.otherPlayers = this.physics.add.group();
