@@ -27,13 +27,16 @@ var config = {
 var game = new Phaser.Game(config);
 
 function preload() {
+  this.load.image('grass', 'assets/grass.jpg');
   this.load.image('tachi', 'assets/white_fluffy_dog_filtered.png');
   this.load.image('otherPlayer', 'assets/black_shiba_inu_filtered.png');
+  this.load.image('bone', 'assets/bone.png');
 }
 
 function create() {
   var self = this;
   this.socket = io();
+  this.add.image(400, 300, 'grass').setDisplaySize(800, 800);;
 
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
   this.otherPlayers = this.physics.add.group();
@@ -119,7 +122,7 @@ function update() {
 
 function addPlayer(self, playerInfo) {
   // Create the player's character by using the x and y coordinates that were generated in the server code. Instead of just using self.add.image to create the character, self.physics.add.image is used in order to allow that game object to use the arcade physics. setOrigin() is used to set the origin of the game object to be in the middle of the object instead of the top left so that when a game object is rotated, it will be rotated around the origin point. setDisplaySize() is used to change the size and scale of the game object since the original size of the images can vary.
-  self.tachi = self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(40, 40);
+  self.tachi = self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(50, 50);
 
   // setDrag, setAngularDrag, and setMaxVelocity are used to modify how the game object reacts to the arcade physics. Both setDrag and setAngularDrag are used to control the amount of resistance the object will face when it is moving. setMaxVelocity is used to control the max speed the game object can reach.
   self.tachi.setDrag(100);
@@ -129,7 +132,7 @@ function addPlayer(self, playerInfo) {
 
 // Similar to the code added in the addPlayer() function. Main difference is that the other player's game object is added to the otherPlayers group.
 function addOtherPlayers(self, playerInfo) {
-  const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(40, 40);
+  const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(50, 50);
 
   otherPlayer.playerId = playerInfo.playerId;
   self.otherPlayers.add(otherPlayer);
