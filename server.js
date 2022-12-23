@@ -9,10 +9,19 @@ const io = socket(server);
 // object to keep track of all players currently in game
 var players = {};
 
-var timerData = {
-  timeLeft: 120,
-  timerPaused: false
-}
+// global time-related variables used to store the countdown time and pause status
+// countdown is set on this server as global variable to enable real-time consistent time updates across users
+var timeLeft = 120;
+var isPaused = false;
+var countDown = setInterval(function() {
+  if (!isPaused) {
+    timeLeft--;
+  }
+
+  if (timeLeft === 0) {
+    clearInterval(countDown);
+  }
+}, 1000);
 
 // Bone variable used to store the position of the bone collectible
 var bone = {
@@ -49,7 +58,8 @@ io.on('connection', (socket) => {
   // Send the players object to the new player
   socket.emit('currentPlayers', players);
 
-  socket.emit('timerUpdate', timerData);
+  // Send the time left on countdown and paused status to the new player
+  socket.emit('timeLeft', { timeLeft: timeLeft, isPaused: isPaused });
 
   // Send the bone object to the new player
   socket.emit('boneLocation', bone);
@@ -81,17 +91,14 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
 
-  socket.on('timerStatus', (timerInfo) => {
-    timerData.timeLeft = timerInfo.timeLeft;
-
-    socket.emit('timerUpdate', timerData);
+  socket.on('timerUpdate', () => {
+    socket.emit('timeLeft', { timeLeft: timeLeft, isPaused: isPaused });
   });
 
-  // socket.on('timeChange', () => {
-  //   timerData.timeLeft -= 1;
-
-  //   io.emit('timerUpdate', timerData);
-  // });
+  socket.on('timerStatusChange', () => {
+    if (!isPaused) isPaused = true;
+    else isPaused = false;
+  })
 
   // When a boneCollected event is triggered, the correct team's score will be updated, a new location for the bone will be generated, and the updated scores and the stars new location will be reflected for each of the players
   socket.on('boneCollected', () => {

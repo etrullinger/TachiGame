@@ -79,19 +79,13 @@ function create() {
     });
   });
 
-  this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-  this.initialTime = 120;
-
+  // To display countdown clock with real-time updates on time left and to enable pause functionality on timer with the spacebar
   this.timeText = this.add.text(300, 20, '', { fontSize: '20px', fill: '#ffffff' });
+  this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  this.spacebar.on('down', () => this.socket.emit('timerStatusChange'));
 
-  this.timedEvent = this.time.addEvent({ delay: 1000, callback: onEvent, callbackScope: this, loop: true });
-
-  this.spacebar.on('down', () => this.timedEvent.paused = !this.timedEvent.paused);
-
-  this.socket.on('timerUpdate', (timerInfo) => {
-    this.initialTime = timerInfo.timeLeft;
-    this.timeText.setText('Countdown: ' + formatTime(timerInfo.timeLeft) + (timerInfo.timerPaused ? '\n     Paused' : ''));
+  this.socket.on('timeLeft', (timerData) => {
+    this.timeText.setText('Countdown: ' + formatTime(timerData.timeLeft) + (timerData.isPaused ? '\n     Paused' : ''));
   });
 
   // Use of Phaser's Text Game Object in order to display the teams' scores
@@ -123,6 +117,9 @@ function create() {
 }
 
 function update() {
+
+  // Regularly emit timerUpdate event
+  this.socket.emit('timerUpdate');
 
   if (this.tachi) {
     // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
@@ -171,27 +168,12 @@ function update() {
   }
 }
 
+// Format timeLeft from seconds to digital clock display
 function formatTime(seconds) {
   var minutes = Math.floor(seconds/60); // Minutes
   var partInSeconds = seconds%60; // Seconds
   partInSeconds = partInSeconds.toString().padStart(2, '0'); // Adds left zeros to seconds
   return `${minutes}:${partInSeconds}`;
-}
-
-function onEvent() {
-  if (this.initialTime > 0) {
-    var timeLeft = this.initialTime - 1;
-    this.initialTime -= 1;
-    this.socket.emit('timerStatus', { timeLeft: timeLeft });
-  } else {
-    if (this.barkScore > this.growlScore) {
-      this.gameResultText.setText('Team Bark Wins!');
-    } else if (this.growlScore > this.barkScore) {
-      this.gameResultText.setText('Team Growl Wins!');
-    } else {
-      this.gameResultText.setText("It's a Draw!");
-    }
-  }
 }
 
 function addPlayer(self, playerInfo) {
