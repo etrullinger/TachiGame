@@ -17,8 +17,8 @@ var bone = {
 
 // Scores variable used to keep track of both team's score
 var scores = {
-  blue: 0,
-  red: 0
+  bark: 0,
+  growl: 0
 }
 
 app.use(express.static(__dirname + '/public'));
@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
     x: Math.floor(Math.random() * 700) + 50,
     y: Math.floor(Math.random() * 500) + 50,
     playerId: socket.id,
-    team: (Math.floor(Math.random() * 2) == 0) ? 'red' : 'blue'
+    team: (Math.floor(Math.random() * 2) == 0) ? 'bark' : 'growl'
   };
 
   // Send the players object to the new player
@@ -75,10 +75,10 @@ io.on('connection', (socket) => {
 
   // When a boneCollected event is triggered, the correct team's score will be updated, a new location for the bone will be generated, and the updated scores and the stars new location will be reflected for each of the players
   socket.on('boneCollected', () => {
-    if (players[socket.id].team === 'red') {
-      scores.red += 10;
+    if (players[socket.id].team === 'bark') {
+      scores.bark += 10;
     } else {
-      scores.blue += 10;
+      scores.growl += 10;
     }
     bone.x = Math.floor(Math.random() * 700) + 50;
     bone.y = Math.floor(Math.random() * 500) + 50;

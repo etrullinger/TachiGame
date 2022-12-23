@@ -38,6 +38,17 @@ function create() {
   this.socket = io();
   this.physics.add.image(0, 0, 'grass').setOrigin(0, 0).setDisplaySize(800, 700);
 
+  // Timer-related variables
+  this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+  this.initialTime = 120;
+
+  this.timeText = this.add.text(300, 20, 'Countdown: ' + formatTime(this.initialTime), { fontSize: '20px', fill: '#ffffff' });
+
+  this.timedEvent = this.time.addEvent({ delay: 1000, callback: onEvent, callbackScope: this, repeat: 119 });
+
+  this.spacebar.on('down', () => this.timedEvent.paused = !this.timedEvent.paused);
+
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
   this.otherPlayers = this.physics.add.group();
 
@@ -80,13 +91,13 @@ function create() {
   });
 
   // Use of Phaser's Text Game Object in order to display the teams' scores
-  this.blueScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#0000FF' });
-  this.redScoreText = this.add.text(584, 16, '', { fontSize: '32px', fill: '#FF0000' });
+  this.barkScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
+  this.growlScoreText = this.add.text(614, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
 
   // When the scoreUpdate event is received, the text of the game objects is updated by calling the setText() method with the team's score passed to each object
   this.socket.on('scoreUpdate', (scores) => {
-    self.blueScoreText.setText('Blue: ' + scores.blue);
-    self.redScoreText.setText('Red: ' + scores.red);
+    self.barkScoreText.setText('Bark: ' + scores.bark);
+    self.growlScoreText.setText('Growl: ' + scores.growl);
   });
 
   // Listen for the boneLocation event. When it's received, bone object is checked to see if it exists and if it does, it is destroyed. A new bone game object is added to the player's game, and the information passed to the event to populate its location is used. If the player's game object and the bone are overlapping, the boneCollected event is emitted.By calling physics.add.overlap, Phaser will automatically check for the overlap and run the provided function when there is an overlap.
@@ -101,6 +112,8 @@ function create() {
 }
 
 function update() {
+
+  this.timeText.setText('Countdown: ' + formatTime(this.initialTime) + '\nPaused: ' + this.timedEvent.paused);
 
   if (this.tachi) {
     // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
@@ -147,6 +160,17 @@ function update() {
       this.physics.world.wrap(otherPlayer, 5);
     });
   }
+}
+
+function formatTime(seconds) {
+  var minutes = Math.floor(seconds/60); // Minutes
+  var partInSeconds = seconds%60; // Seconds
+  partInSeconds = partInSeconds.toString().padStart(2, '0'); // Adds left zeros to seconds
+  return `${minutes}:${partInSeconds}`;
+}
+
+function onEvent() {
+  this.initialTime -= 1;
 }
 
 function addPlayer(self, playerInfo) {
