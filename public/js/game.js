@@ -38,20 +38,9 @@ function create() {
   this.socket = io();
   this.physics.add.image(0, 0, 'grass').setOrigin(0, 0).setDisplaySize(800, 700);
 
-  // Timer-related variables
-  this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-  this.initialTime = 120;
-
-  this.timeText = this.add.text(300, 20, 'Countdown: ' + formatTime(this.initialTime), { fontSize: '20px', fill: '#ffffff' });
-
-  this.timedEvent = this.time.addEvent({ delay: 1000, callback: onEvent, callbackScope: this, repeat: 119 });
-
-  this.spacebar.on('down', () => this.timedEvent.paused = !this.timedEvent.paused);
-
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
   this.otherPlayers = this.physics.add.group();
-
+  
   // Used socket.on to listen for the currentPlayers event. When this event is triggered, the function that was provided will be called with the players object that was passed from the server. When this function is called, loop through each of the players and check to see if that player's id matches the current player's socket id. The addPlayer() function is called and passed the current player's information, and a reference to the current scene. If the player is not the current player, the addOtherPlayers function is called.
   this.socket.on('currentPlayers', (players) => {
     Object.keys(players).forEach((id) => {
@@ -90,12 +79,34 @@ function create() {
     });
   });
 
+  this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+  this.initialTime = 120;
+
+  this.timeText = this.add.text(300, 20, '', { fontSize: '20px', fill: '#ffffff' });
+
+  this.timedEvent = this.time.addEvent({ delay: 1000, callback: onEvent, callbackScope: this, loop: true });
+
+  this.spacebar.on('down', () => this.timedEvent.paused = !this.timedEvent.paused);
+
+  this.socket.on('timerUpdate', (timerInfo) => {
+    this.initialTime = timerInfo.timeLeft;
+    this.timeText.setText('Countdown: ' + formatTime(timerInfo.timeLeft) + (timerInfo.timerPaused ? '\n     Paused' : ''));
+  });
+
   // Use of Phaser's Text Game Object in order to display the teams' scores
   this.barkScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
-  this.growlScoreText = this.add.text(614, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
+  this.growlScoreText = this.add.text(594, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
+
+  this.barkScore = 0;
+  this.growlScore = 0;
+
+  this.gameResultText = this.add.text(200, 250, '', { fontSize: '40px', fill: '#ffffff', fontStyle: 'bold' });
 
   // When the scoreUpdate event is received, the text of the game objects is updated by calling the setText() method with the team's score passed to each object
   this.socket.on('scoreUpdate', (scores) => {
+    this.barkScore = scores.bark;
+    this.growlScore = scores.growl;
     self.barkScoreText.setText('Bark: ' + scores.bark);
     self.growlScoreText.setText('Growl: ' + scores.growl);
   });
@@ -112,8 +123,6 @@ function create() {
 }
 
 function update() {
-
-  this.timeText.setText('Countdown: ' + formatTime(this.initialTime) + '\nPaused: ' + this.timedEvent.paused);
 
   if (this.tachi) {
     // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
@@ -170,7 +179,19 @@ function formatTime(seconds) {
 }
 
 function onEvent() {
-  this.initialTime -= 1;
+  if (this.initialTime > 0) {
+    var timeLeft = this.initialTime - 1;
+    this.initialTime -= 1;
+    this.socket.emit('timerStatus', { timeLeft: timeLeft });
+  } else {
+    if (this.barkScore > this.growlScore) {
+      this.gameResultText.setText('Team Bark Wins!');
+    } else if (this.growlScore > this.barkScore) {
+      this.gameResultText.setText('Team Growl Wins!');
+    } else {
+      this.gameResultText.setText("It's a Draw!");
+    }
+  }
 }
 
 function addPlayer(self, playerInfo) {

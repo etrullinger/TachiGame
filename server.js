@@ -9,6 +9,11 @@ const io = socket(server);
 // object to keep track of all players currently in game
 var players = {};
 
+var timerData = {
+  timeLeft: 120,
+  timerPaused: false
+}
+
 // Bone variable used to store the position of the bone collectible
 var bone = {
   x: Math.floor(Math.random() * 700) + 50,
@@ -37,11 +42,14 @@ io.on('connection', (socket) => {
     x: Math.floor(Math.random() * 700) + 50,
     y: Math.floor(Math.random() * 500) + 50,
     playerId: socket.id,
-    team: (Math.floor(Math.random() * 2) == 0) ? 'bark' : 'growl'
+    team: (Math.floor(Math.random() * 2) == 0) ? 'bark' : 'growl',
+    timeLeft: 120
   };
 
   // Send the players object to the new player
   socket.emit('currentPlayers', players);
+
+  socket.emit('timerUpdate', timerData);
 
   // Send the bone object to the new player
   socket.emit('boneLocation', bone);
@@ -72,6 +80,18 @@ io.on('connection', (socket) => {
     // Emit a message to all players about the player that moved
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
+
+  socket.on('timerStatus', (timerInfo) => {
+    timerData.timeLeft = timerInfo.timeLeft;
+
+    socket.emit('timerUpdate', timerData);
+  });
+
+  // socket.on('timeChange', () => {
+  //   timerData.timeLeft -= 1;
+
+  //   io.emit('timerUpdate', timerData);
+  // });
 
   // When a boneCollected event is triggered, the correct team's score will be updated, a new location for the bone will be generated, and the updated scores and the stars new location will be reflected for each of the players
   socket.on('boneCollected', () => {
