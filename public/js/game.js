@@ -20,7 +20,9 @@ var config = {
     preload: preload,
     create: create,
     update, update
-  }
+  },
+  title: 'Tachi Race',
+  version: '1.0b'
 };
 
 // Create new game instance and pass the config object to Phaser
@@ -28,7 +30,8 @@ var game = new Phaser.Game(config);
 
 function preload() {
   this.load.image('grass', 'assets/grass.jpg');
-  this.load.image('tachi', 'assets/white_fluffy_dog_filtered.png');
+  this.load.spritesheet('tachi', 'assets/white_dog_sprite_sheet.png', { frameWidth: 95, frameHeight: 100 });
+  // this.load.image('tachi', 'assets/white_fluffy_dog_filtered.png');
   this.load.image('shiba', 'assets/black_shiba_inu_filtered.png');
   this.load.image('bone', 'assets/bone.png');
 }
@@ -129,20 +132,45 @@ function update() {
   this.socket.emit('gameStatus');
 
   if (this.player) {
-    // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
-    if (this.cursors.left.isDown) {
-      this.player.setAngularVelocity(-150);
-    } else if (this.cursors.right.isDown) {
-      this.player.setAngularVelocity(150);
-    } else {
-      this.player.setAngularVelocity(0);
-    }
+    if (!this.player.anims) {
+      // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
+      if (this.cursors.left.isDown) {
+        this.player.setAngularVelocity(-150);
+      } else if (this.cursors.right.isDown) {
+        this.player.setAngularVelocity(150);
+      } else {
+        this.player.setAngularVelocity(0);
+      }
 
-    // If the up key is pressed, then the character’s velocity is updated, otherwise, it's set to 0. 
-    if (this.cursors.up.isDown) {
-      this.physics.velocityFromRotation(this.player.rotation + 1.5, 100, this.player.body.acceleration);
-    } else {
-      this.player.setAcceleration(0);
+      // If the up key is pressed, then the character’s velocity is updated, otherwise, it's set to 0. 
+      if (this.cursors.up.isDown) {
+        this.physics.velocityFromRotation(this.player.rotation + 1.5, 100, this.player.body.acceleration);
+      } else {
+        this.player.setAcceleration(0);
+      }
+    }
+    
+    if (this.player.anims) {
+      if (this.cursors.left.isDown) {
+        this.player.setVelocityX(-150);
+        this.player.anims.play('left', true);
+
+      } else if (this.cursors.right.isDown) {
+        this.player.setVelocityX(150);
+        this.player.anims.play('right', true);
+
+      } else if (this.cursors.up.isDown) {
+        this.player.setVelocityY(-150);
+        this.player.anims.play('up', true);
+
+      } else if (this.cursors.down.isDown) {
+        this.player.setVelocityY(150);
+        this.player.anims.play('down', true);
+
+      } else {
+        this.player.setVelocityX(0);
+        this.player.anims.play('turn');
+      }
     }
 
     // If the character goes off screen it will appear on the other side of the screen. This is done by calling physics.world.wrap() and passing the game object we want to wrap and offset.
@@ -169,8 +197,13 @@ function update() {
   if (this.otherPlayers) {
     // Set size of collision rectangle for other players' game objects
     this.otherPlayers.getChildren().forEach((otherPlayer) => {
-      otherPlayer.body.setSize(120, 120);
       this.physics.world.wrap(otherPlayer, 5);
+
+      if (otherPlayer.team === 'tachi') {
+        otherPlayer.body.setSize(30, 30);
+      } else {
+        otherPlayer.body.setSize(120, 120);
+      }
     });
   }
 }
@@ -185,13 +218,57 @@ function formatTime(seconds) {
 
 function addPlayer(self, playerInfo) {
   // Create the player's character by using the x and y coordinates that were generated in the server code. Instead of just using self.add.image to create the character, self.physics.add.image is used in order to allow that game object to use the arcade physics. setOrigin() is used to set the origin of the game object to be in the middle of the object instead of the top left so that when a game object is rotated, it will be rotated around the origin point. setDisplaySize() is used to change the size and scale of the game object since the original size of the images can vary.
-  self.player = playerInfo.team === 'tachi' ? self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80) : self.physics.add.image(playerInfo.x, playerInfo.y, 'shiba').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
+  // self.player = playerInfo.team === 'tachi' ? self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80) : self.physics.add.image(playerInfo.x, playerInfo.y, 'shiba').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
 
+  self.player = playerInfo.team === 'tachi' ? self.physics.add.sprite(playerInfo.x, playerInfo.y, 'tachi') : self.physics.add.image(playerInfo.x, playerInfo.y, 'shiba').setOrigin(0.5, 0.5).setDisplaySize(65, 65);
+
+  if (playerInfo.team === 'tachi') {
+    self.anims.create({
+      key: 'left',
+      frames: self.anims.generateFrameNumbers('tachi', { start: 12, end: 15 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    self.anims.create({
+      key: 'turn',
+      frames: [ { key: 'tachi', frame: 16 } ],
+      frameRate: 20
+    });
+
+    self.anims.create({
+      key: 'right',
+      frames: self.anims.generateFrameNumbers('tachi', { start: 4, end: 7 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    self.anims.create({
+      key: 'up',
+      frames: self.anims.generateFrameNumbers('tachi', { start: 8, end: 11 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    self.anims.create({
+      key: 'down',
+      frames: self.anims.generateFrameNumbers('tachi', { start: 0, end: 4 }),
+      frameRate: 10,
+      repeat: -1
+    })
+
+    self.player.body.setSize(30, 30);
+  }
+
+  if (playerInfo.team === 'shiba') {
+    self.player.body.setSize(120, 120);
+  }
+  
   // To make players collide instead of overlapping each other
   self.physics.add.collider(self.player, self.otherPlayers);
 
-  // Set size of collision rectangle for player's game object
-  self.player.body.setSize(120, 120);
+  // // Set size of collision rectangle for player's game object
+  // self.player.body.setSize(120, 120);
 
   // setDrag, setAngularDrag, and setMaxVelocity are used to modify how the game object reacts to the arcade physics. Both setDrag and setAngularDrag are used to control the amount of resistance the object will face when it is moving. setMaxVelocity is used to control the max speed the game object can reach.
   self.player.setDrag(100);
@@ -201,10 +278,12 @@ function addPlayer(self, playerInfo) {
 
 // Similar to the code added in the addPlayer() function. Main difference is that the other player's game object is added to the otherPlayers group.
 function addOtherPlayers(self, playerInfo) {
-  var otherPlayer = playerInfo.team === 'shiba' ? self.physics.add.sprite(playerInfo.x, playerInfo.y, 'shiba').setOrigin(0.5, 0.5).setDisplaySize(80, 80): self.physics.add.sprite(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
+  var otherPlayer = playerInfo.team === 'shiba' ? self.physics.add.sprite(playerInfo.x, playerInfo.y, 'shiba').setOrigin(0.5, 0.5).setDisplaySize(65, 65): self.physics.add.sprite(playerInfo.x, playerInfo.y, 'tachi');
 
   // To make other players in player's scene not pushable with collision
   otherPlayer.body.pushable = false;
+
+  otherPlayer.team = playerInfo.team;
 
   otherPlayer.playerId = playerInfo.playerId;
   self.otherPlayers.add(otherPlayer);
