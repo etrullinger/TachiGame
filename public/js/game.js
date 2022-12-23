@@ -29,7 +29,7 @@ var game = new Phaser.Game(config);
 function preload() {
   this.load.image('grass', 'assets/grass.jpg');
   this.load.image('tachi', 'assets/white_fluffy_dog_filtered.png');
-  this.load.image('otherPlayer', 'assets/black_shiba_inu_filtered.png');
+  this.load.image('shiba', 'assets/black_shiba_inu_filtered.png');
   this.load.image('bone', 'assets/bone.png');
 }
 
@@ -89,13 +89,13 @@ function create() {
   });
 
   // Use of Phaser's Text Game Object in order to display the teams' scores
-  this.barkScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
-  this.growlScoreText = this.add.text(594, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
+  this.tachiScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
+  this.shibaScoreText = this.add.text(594, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
 
   // When the scoreUpdate event is received, the text of the game objects is updated by calling the setText() method with the team's score passed to each object
   this.socket.on('scoreUpdate', (scores) => {
-    self.barkScoreText.setText('Bark: ' + scores.bark);
-    self.growlScoreText.setText('Growl: ' + scores.growl);
+    self.tachiScoreText.setText('Tachi: ' + scores.tachi);
+    self.shibaScoreText.setText('Shiba: ' + scores.shiba);
   });
 
   // Listen for the boneLocation event. When it's received, bone object is checked to see if it exists and if it does, it is destroyed. A new bone game object is added to the player's game, and the information passed to the event to populate its location is used. If the player's game object and the bone are overlapping, the boneCollected event is emitted.By calling physics.add.overlap, Phaser will automatically check for the overlap and run the provided function when there is an overlap.
@@ -103,7 +103,7 @@ function create() {
     if (self.bone) self.bone.destroy();
     self.bone = self.physics.add.image(boneLocation.x, boneLocation.y, 'bone').setDisplaySize(40, 25);
     self.bone.body.setSize(250, 70);
-    self.physics.add.overlap(self.tachi, self.bone, () => {
+    self.physics.add.overlap(self.player, self.bone, () => {
       this.socket.emit('boneCollected');
     }, null, self);
   });
@@ -111,10 +111,10 @@ function create() {
   this.gameResultText = this.add.text(200, 250, '', { fontSize: '40px', fill: '#ffffff', fontStyle: 'bold' });
 
   this.socket.on('gameOver', (scores) => {
-    if (scores.bark > scores.growl) {
-      this.gameResultText.setText('Team Bark Wins!');
-    } else if (scores.growl > scores.bark) {
-      this.gameResultText.setText('Team Growl Wins!');
+    if (scores.tachi > scores.shiba) {
+      this.gameResultText.setText('Team Tachi Wins!');
+    } else if (scores.shiba > scores.tachi) {
+      this.gameResultText.setText('Team Shiba Wins!');
     } else {
       this.gameResultText.setText("It's a Draw!");
     }
@@ -127,41 +127,41 @@ function update() {
   this.socket.emit('timerUpdate');
   this.socket.emit('gameStatus');
 
-  if (this.tachi) {
+  if (this.player) {
     // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
     if (this.cursors.left.isDown) {
-      this.tachi.setAngularVelocity(-150);
+      this.player.setAngularVelocity(-150);
     } else if (this.cursors.right.isDown) {
-      this.tachi.setAngularVelocity(150);
+      this.player.setAngularVelocity(150);
     } else {
-      this.tachi.setAngularVelocity(0);
+      this.player.setAngularVelocity(0);
     }
 
     // If the up key is pressed, then the character’s velocity is updated, otherwise, it's set to 0. 
     if (this.cursors.up.isDown) {
-      this.physics.velocityFromRotation(this.tachi.rotation + 1.5, 100, this.tachi.body.acceleration);
+      this.physics.velocityFromRotation(this.player.rotation + 1.5, 100, this.player.body.acceleration);
     } else {
-      this.tachi.setAcceleration(0);
+      this.player.setAcceleration(0);
     }
 
     // If the character goes off screen it will appear on the other side of the screen. This is done by calling physics.world.wrap() and passing the game object we want to wrap and offset.
-    this.physics.world.wrap(this.tachi, 5);
+    this.physics.world.wrap(this.player, 5);
 
     // emit player movement
-    var x = this.tachi.x;
-    var y = this.tachi.y;
-    var r = this.tachi.rotation;
+    var x = this.player.x;
+    var y = this.player.y;
+    var r = this.player.rotation;
     
     // Check to see if the player's rotation or position has changed by comparing the variables to the player's previous rotation and position. If the player’s position or rotation has changed, then a new event called playerMovement is emitted and the player’s information is passed into it.
-    if (this.tachi.oldPosition && (x !== this.tachi.oldPosition.x || y !== this.tachi.oldPosition.y || r !== this.tachi.oldPosition.rotation)) {
-      this.socket.emit('playerMovement', { x: this.tachi.x, y: this.tachi.y, rotation: this.tachi.rotation });
+    if (this.player.oldPosition && (x !== this.player.oldPosition.x || y !== this.player.oldPosition.y || r !== this.player.oldPosition.rotation)) {
+      this.socket.emit('playerMovement', { x: this.player.x, y: this.player.y, rotation: this.player.rotation });
     }
 
     // save old position data with player's current rotation and position
-    this.tachi.oldPosition = {
-      x: this.tachi.x,
-      y: this.tachi.y,
-      rotation: this.tachi.rotation
+    this.player.oldPosition = {
+      x: this.player.x,
+      y: this.player.y,
+      rotation: this.player.rotation
     };
   }
 
@@ -184,23 +184,23 @@ function formatTime(seconds) {
 
 function addPlayer(self, playerInfo) {
   // Create the player's character by using the x and y coordinates that were generated in the server code. Instead of just using self.add.image to create the character, self.physics.add.image is used in order to allow that game object to use the arcade physics. setOrigin() is used to set the origin of the game object to be in the middle of the object instead of the top left so that when a game object is rotated, it will be rotated around the origin point. setDisplaySize() is used to change the size and scale of the game object since the original size of the images can vary.
-  self.tachi = self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
+  self.player = playerInfo.team == 'tachi' ? self.physics.add.image(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80) : self.physics.add.image(playerInfo.x, playerInfo.y, 'shiba').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
 
   // To make players collide instead of overlapping each other
-  self.physics.add.collider(self.tachi, self.otherPlayers);
+  self.physics.add.collider(self.player, self.otherPlayers);
 
   // Set size of collision rectangle for player's game object
-  self.tachi.body.setSize(140, 120);
+  self.player.body.setSize(140, 120);
 
   // setDrag, setAngularDrag, and setMaxVelocity are used to modify how the game object reacts to the arcade physics. Both setDrag and setAngularDrag are used to control the amount of resistance the object will face when it is moving. setMaxVelocity is used to control the max speed the game object can reach.
-  self.tachi.setDrag(100);
-  self.tachi.setAngularDrag(100);
-  self.tachi.setMaxVelocity(200);
+  self.player.setDrag(100);
+  self.player.setAngularDrag(100);
+  self.player.setMaxVelocity(200);
 }
 
 // Similar to the code added in the addPlayer() function. Main difference is that the other player's game object is added to the otherPlayers group.
 function addOtherPlayers(self, playerInfo) {
-  var otherPlayer = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayer').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
+  var otherPlayer = playerInfo.team == 'shiba' ? self.physics.add.sprite(playerInfo.x, playerInfo.y, 'shiba').setOrigin(0.5, 0.5).setDisplaySize(80, 80): self.physics.add.sprite(playerInfo.x, playerInfo.y, 'tachi').setOrigin(0.5, 0.5).setDisplaySize(80, 80);
 
   // To make other players in player's scene not pushable with collision
   otherPlayer.body.pushable = false;
