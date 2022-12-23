@@ -54,7 +54,6 @@ io.on('connection', (socket) => {
     y: Math.floor(Math.random() * 500) + 50,
     playerId: socket.id,
     team: Object.keys(players).length%2 == 0 ? 'tachi' : 'shiba',
-    timeLeft: 120
   };
 
   // Send the players object to the new player
