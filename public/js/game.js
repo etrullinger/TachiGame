@@ -92,11 +92,6 @@ function create() {
   this.barkScoreText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
   this.growlScoreText = this.add.text(594, 16, '', { fontSize: '32px', fill: '#800000', fontStyle: 'bold' });
 
-  this.barkScore = 0;
-  this.growlScore = 0;
-
-  this.gameResultText = this.add.text(200, 250, '', { fontSize: '40px', fill: '#ffffff', fontStyle: 'bold' });
-
   // When the scoreUpdate event is received, the text of the game objects is updated by calling the setText() method with the team's score passed to each object
   this.socket.on('scoreUpdate', (scores) => {
     this.barkScore = scores.bark;
@@ -114,12 +109,25 @@ function create() {
       this.socket.emit('boneCollected');
     }, null, self);
   });
+
+  this.gameResultText = this.add.text(200, 250, '', { fontSize: '40px', fill: '#ffffff', fontStyle: 'bold' });
+
+  this.socket.on('gameOver', (scores) => {
+    if (scores.bark > scores.growl) {
+      this.gameResultText.setText('Team Bark Wins!');
+    } else if (scores.growl > scores.bark) {
+      this.gameResultText.setText('Team Growl Wins!');
+    } else {
+      this.gameResultText.setText("It's a Draw!");
+    }
+  });
 }
 
 function update() {
 
-  // Regularly emit timerUpdate event
+  // Regularly emit timerUpdate and gameStatus events
   this.socket.emit('timerUpdate');
+  this.socket.emit('gameStatus');
 
   if (this.tachi) {
     // If the left or right key is pressed, the player's angular velocity is updated by calling setAngularVelocity(). The angular velocity will allow the character to rotate left and right. If neighter keys are pressed, then the angular velocity is reset back to 0.
