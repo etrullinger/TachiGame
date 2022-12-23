@@ -94,8 +94,6 @@ function create() {
 
   // When the scoreUpdate event is received, the text of the game objects is updated by calling the setText() method with the team's score passed to each object
   this.socket.on('scoreUpdate', (scores) => {
-    this.barkScore = scores.bark;
-    this.growlScore = scores.growl;
     self.barkScoreText.setText('Bark: ' + scores.bark);
     self.growlScoreText.setText('Growl: ' + scores.growl);
   });

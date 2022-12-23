@@ -66,13 +66,13 @@ io.on('connection', (socket) => {
   // Send the bone object to the new player
   socket.emit('boneLocation', bone);
 
-  // Send the current scores
+  // Send the current scores to the new player
   socket.emit('scoreUpdate', scores);
 
-  // Update all players of the new player
+  // Update all other players of the new player
   socket.broadcast.emit('newPlayer', players[socket.id]);
 
-  // When a player disconnects, that player's data is removed from the players object, and a message is emitted to all other players about this player leaving
+  // When a player disconnects, that player's data is removed from the players object, and a message is emitted to all players about this player leaving
   socket.on('disconnect', () => {
     console.log('user disconnected');
 
@@ -89,7 +89,7 @@ io.on('connection', (socket) => {
     players[socket.id].y = movementData.y;
     players[socket.id].rotation = movementData.rotation;
 
-    // Emit a message to all players about the player that moved
+    // Emit a message to all other players about the player that moved
     socket.broadcast.emit('playerMoved', players[socket.id]);
   });
 
@@ -104,15 +104,17 @@ io.on('connection', (socket) => {
 
   // When a boneCollected event is triggered, the correct team's score will be updated, a new location for the bone will be generated, and the updated scores and the stars new location will be reflected for each of the players
   socket.on('boneCollected', () => {
-    if (players[socket.id].team === 'bark') {
-      scores.bark += 10;
-    } else {
-      scores.growl += 10;
+    if (!gameIsOver) {
+      if (players[socket.id].team === 'bark') {
+        scores.bark += 10;
+      } else {
+        scores.growl += 10;
+      }
+      bone.x = Math.floor(Math.random() * 700) + 50;
+      bone.y = Math.floor(Math.random() * 500) + 50;
+      io.emit('boneLocation', bone);
+      io.emit('scoreUpdate', scores);
     }
-    bone.x = Math.floor(Math.random() * 700) + 50;
-    bone.y = Math.floor(Math.random() * 500) + 50;
-    io.emit('boneLocation', bone);
-    io.emit('scoreUpdate', scores);
   });
 
   socket.on('gameStatus', () => {
