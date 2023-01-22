@@ -47,6 +47,11 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('a user connected');
 
+  socket.on('chat message', (msg) => {
+    console.log('message: ' + msg);
+    io.emit('chat message', msg);
+  });
+
   // Create a new player and add it to the players object
   players[socket.id] = {
     rotation: 0,

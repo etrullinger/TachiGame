@@ -22,7 +22,7 @@ var config = {
     update: update
   },
   title: 'Tachi Race',
-  version: '1.0b'
+  version: '1.2b'
 };
 
 // Create new game instance and pass the config object to Phaser

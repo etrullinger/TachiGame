@@ -7,13 +7,26 @@
 </head>
 <body>
 
+  <p>Click the Start Video button in two tabs (of the same browser) to connect over video.</p>
+
   <div id="container">
-    <p>Click the Start Video button in two tabs (of the same browser) to connect over video.</p>
-    <video id="localVideo" playsinline autoplay muted></video>
-    <video id="remoteVideo" playsinline autoplay></video>
-    <div class="box">
-      <button id="startVideoButton">Start Video</button>
-      <button id="hangupButton">Hang Up</button>
+    <div id="video-container">
+      <div id="videos">
+        <video id="localVideo" playsinline autoplay muted></video>
+        <video id="remoteVideo" playsinline autoplay></video>
+      </div>
+      <div class="box">
+        <button id="startVideoButton">Start Video</button>
+        <button id="hangupButton">Hang Up</button>
+      </div>
+    </div>
+
+    <div id="chat-container">
+      <ul id="messages"></ul>
+      <form id="form" action="">
+        <input id="input" autocomplete="off" />
+        <button>Send</button>
+      </form>
     </div>
   </div>
 
@@ -25,5 +38,7 @@
   <script src="js/game.js"></script>
   <!--webrtc code for teleconferencing-->
   <script src="js/teleconference.js"></script>
+  <!--js code for chat message-->
+  <script src="js/chat.js"></script>
 </body>
 </html>
