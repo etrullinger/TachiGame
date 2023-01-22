@@ -19,7 +19,7 @@ var config = {
   scene: {
     preload: preload,
     create: create,
-    update, update
+    update: update
   },
   title: 'Tachi Race',
   version: '1.0b'

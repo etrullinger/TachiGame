@@ -4,3 +4,45 @@
   background-image: url('https://img.freepik.com/free-vector/brown-soil-texture-background_1308-20483.jpg');
   background-size: cover;
 }
+
+button {
+  margin: 0 20px 0 0;
+  width: 83px;
+}
+
+button#hangupButton {
+  margin: 0;
+}
+
+video {
+  --width: 30%;
+  width: var(--width);
+  height: calc(var(--width) * 0.75);
+  margin: 0 0 20px 0;
+  vertical-align: top;
+}
+
+video#localVideo {
+  margin: 0 20px 20px 0;
+}
+
+div.box {
+  margin: 1em;
+}
+
+@media screen and (max-width: 400px) {
+  button {
+    width: 83px;
+    margin: 0 11px 10px 0;
+  }
+
+  video {
+    height: 90px;
+    margin: 0 0 10px 0;
+    width: calc(50% - 7px);
+  }
+
+  video#localVideo {
+    margin: 0 10px 20px 0;
+  }
+}
