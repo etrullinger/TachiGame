@@ -45,12 +45,7 @@ app.get('/', (req, res) => {
 
 // add logic to listen for connections and disconnections
 io.on('connection', (socket) => {
-  console.log('a user connected');
-
-  socket.on('chat message', (msg) => {
-    console.log('message: ' + msg);
-    io.emit('chat message', msg);
-  });
+  console.log('a user connected', socket.id);
 
   // Create a new player and add it to the players object
   players[socket.id] = {
@@ -60,6 +55,13 @@ io.on('connection', (socket) => {
     playerId: socket.id,
     team: Object.keys(players).length%2 == 0 ? 'tachi' : 'shiba',
   };
+
+  socket.on('chat message', (msg) => {
+    console.log('message: ' + msg);
+    var chatLine = players[socket.id].team + ': ' + msg;
+    console.log('chat line: ' + chatLine);
+    io.emit('chat message', chatLine);
+  });
 
   // Send the players object to the new player
   socket.emit('currentPlayers', players);

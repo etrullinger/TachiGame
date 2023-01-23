@@ -98,9 +98,9 @@ div.box {
   background: rgba(0, 0, 0, 0.15);
 }
 
-#messages>li:nth-child(odd) {
+/* #messages>li:nth-child(odd) {
   background: gainsboro;
-}
+} */
 
 @media screen and (max-width: 400px) {
   button {

@@ -7,6 +7,9 @@ var config = {
   // specify width and height of the viewable area of the game
   width: 800,
   height: 600,
+  dom: {
+    createContainer: true
+  },
   // enable the arcade physics that is available in Phaser
   physics: {
     default: 'arcade',
@@ -25,8 +28,29 @@ var config = {
   version: '1.2b'
 };
 
-// Create new game instance and pass the config object to Phaser
-var game = new Phaser.Game(config);
+var socket = io();
+var messages = document.querySelector('#messages');
+var chatButton = document.querySelector('#chatButton');
+var input = document.querySelector('#input');
+
+input.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    chatButton.click(e);
+  }
+});
+
+chatButton.addEventListener('click', function(e) {
+  if (input.value) {
+    socket.emit('chat message', input.value);
+    input.value='';
+  }
+})
+
+socket.on('chat message', function(msg) {
+  var item = document.createElement('li');
+  item.textContent = msg;
+  messages.appendChild(item);
+});
 
 function preload() {
   this.load.image('grass', 'assets/grass.jpg');
@@ -36,9 +60,13 @@ function preload() {
   this.load.image('bone', 'assets/bone.png');
 }
 
+// Create new game instance and pass the config object to Phaser
+var game = new Phaser.Game(config);
+
 function create() {
   var self = this;
-  this.socket = io();
+  this.socket = socket;
+
   this.physics.add.image(0, 0, 'grass').setOrigin(0, 0).setDisplaySize(800, 700);
 
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
@@ -47,8 +75,8 @@ function create() {
   // Used socket.on to listen for the currentPlayers event. When this event is triggered, the function that was provided will be called with the players object that was passed from the server. When this function is called, loop through each of the players and check to see if that player's id matches the current player's socket id. The addPlayer() function is called and passed the current player's information, and a reference to the current scene. If the player is not the current player, the addOtherPlayers function is called.
   this.socket.on('currentPlayers', (players) => {
     Object.keys(players).forEach((id) => {
-      if (players[id].playerId === self.socket.id) {
-        addPlayer(self, players[id]);
+      if (players[id].playerId === this.socket.id) {
+        addPlayer(this, players[id]);
       } else {
         addOtherPlayers(self, players[id]);
       }
@@ -82,10 +110,11 @@ function create() {
     });
   });
 
-  // To display countdown clock with real-time updates on time left and to enable pause functionality on timer with the spacebar
+  // To display countdown clock with real-time updates on time left and to enable pause functionality upon click on canvas
   this.timeText = this.add.text(300, 20, '', { fontSize: '20px', fill: '#ffffff' });
-  this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-  this.spacebar.on('down', () => this.socket.emit('timerStatusChange'));
+  // this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  // this.spacebar.on('down', () => this.socket.emit('timerStatusChange'));
+  this.input.on('pointerdown', () => this.socket.emit('timerStatusChange'));
 
   this.socket.on('timeLeft', (timerData) => {
     this.timeText.setText('Countdown: ' + formatTime(timerData.timeLeft) + (timerData.isPaused ? '\n     Paused' : ''));
