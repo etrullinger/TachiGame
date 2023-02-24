@@ -2,11 +2,11 @@
   "name": "tachi",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "public/js/game.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "nodemon server",
-    "start": "node server"
+    "start": "node server",
+    "start:dev": "nodemon server"
   },
   "keywords": [],
   "author": "",
