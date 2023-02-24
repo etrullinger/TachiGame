@@ -130,6 +130,8 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(8081, () => {
+const PORT = process.env.PORT || 8081
+
+server.listen(PORT, () => {
   console.log(`Listening on ${server.address().port}`);
 });
