@@ -44,7 +44,7 @@ chatButton.addEventListener('click', function(e) {
     socket.emit('chat message', input.value);
     input.value='';
   }
-})
+});
 
 socket.on('chat message', function(msg) {
   var item = document.createElement('li');
@@ -54,6 +54,7 @@ socket.on('chat message', function(msg) {
 
 function preload() {
   this.load.image('grass', 'assets/grass.jpg');
+  this.load.image('play', 'assets/PlayButton.png');
   this.load.spritesheet('tachi', 'assets/white_dog_sprite_sheet.png', { frameWidth: 95, frameHeight: 100 });
   // this.load.image('tachi', 'assets/white_fluffy_dog_filtered.png');
   this.load.image('shiba', 'assets/black_shiba_inu_filtered.png');
@@ -63,11 +64,16 @@ function preload() {
 // Create new game instance and pass the config object to Phaser
 var game = new Phaser.Game(config);
 
+var button;
+
 function create() {
   var self = this;
-  this.socket = socket;
+  this.socket = io();
 
   this.physics.add.image(0, 0, 'grass').setOrigin(0, 0).setDisplaySize(800, 700);
+  var play = this.physics.add.image(300, 200, 'play').setOrigin(0, 0).setDisplaySize(200, 100).setInteractive();
+
+  play.on('pointerup', () => this.socket.emit('startGame'));
 
   // Create a new group called otherPlayers, which will be used to manage all of the other players in the game. 
   this.otherPlayers = this.physics.add.group();
@@ -95,6 +101,10 @@ function create() {
         otherPlayer.destroy();
       }
     });
+  });
+
+  this.socket.on('removePlay', () => {
+    play.destroy();
   });
 
   // This will populate the cursors object with the four main Key objects (up, down, left, right), which will bind to those arrows on the keyboard.

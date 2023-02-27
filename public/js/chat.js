@@ -1,3 +1,7 @@
+// import io from "socket.io-client";
+
+// var socket = io();
+
 var messages = document.querySelector('#messages');
 var chatButton = document.querySelector('#chatButton');
 var input = document.querySelector('#input');
